@@ -1,14 +1,5 @@
 # Using API's
 A request that can be sent from the browser to a server.  These requests typically return json data that can be used on your web page
-Background on you, introduce yourself
-History and how your career planned
-AI effect, curiosity is secret to success
-passionate
-simplefy implementation
-powerpoint with screen shots
-   add a slide of web pages that are using APIs
-   share google sheet
-by Wednesday
 
 ## Common API Categories:
 
