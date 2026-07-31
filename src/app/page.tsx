@@ -1,9 +1,152 @@
+'use client';
+
+import { useState, type FormEvent } from 'react';
+
+type SearchState = {
+  success: boolean;
+  data?: Array<{
+    id: number;
+    name: string;
+    cuisine?: string;
+    street?: string;
+  }>;
+  error?: string;
+};
+
+const initialState: SearchState = { success: false };
+
+async function searchFoodOSMDirect({
+  latitude,
+  longitude,
+  radius = 3000,
+  foodType = 'restaurant',
+}: {
+  latitude: number;
+  longitude: number;
+  radius?: number;
+  foodType?: string;
+}): Promise<SearchState> {
+  const query = `[out:json][timeout:25];(nwr["amenity"="${foodType}"](around:${radius},${latitude},${longitude}););out center;`;
+
+  try {
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: `data=${encodeURIComponent(query)}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenStreetMap request failed (${response.status}: ${errorText.slice(0, 200)})`);
+    }
+
+    const result = await response.json();
+    const places = (result?.elements ?? []).map((element: any) => {
+      const lat = element.lat ?? element.center?.lat;
+      const lon = element.lon ?? element.center?.lon;
+
+      return {
+        id: element.id,
+        name: element.tags?.name || 'Unnamed Food Spot',
+        cuisine: element.tags?.cuisine,
+        street: element.tags?.['addr:street'],
+        lat,
+        lon,
+      };
+    });
+
+    return {
+      success: true,
+      data: places.slice(0, 20),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An error occurred',
+    };
+  }
+}
+
 export default function Home() {
+  const [state, setState] = useState<SearchState>(initialState);
+  const [isPending, setIsPending] = useState(false);
+
+  async function submitSearchDirect(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const latitude = Number((formData.get('latitude') as string | null)?.trim() ?? '');
+    const longitude = Number((formData.get('longitude') as string | null)?.trim() ?? '');
+
+    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      setState({ success: false, error: 'Enter both latitude and longitude.' });
+      return;
+    }
+
+    setIsPending(true);
+    const result = await searchFoodOSMDirect({ latitude, longitude, foodType: 'restaurant' });
+    setState(result);
+    setIsPending(false);
+  }
+
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-visible bg-zinc-50 font-sans dark:bg-black">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-50 font-sans dark:bg-black">
       <div className="absolute inset-0 bg-[url('/eats.png')] bg-contain bg-center bg-no-repeat" />
-      <div className="absolute inset-0 bg-black/35" />
-      <main className="items-center justify-between" />
+      <div className="absolute inset-0" />
+      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center justify-end pt-80 text-center sm:px-8 sm:pb-12">
+        <div className="m-2 w-[80%] max-w-[28rem] rounded-2xl border border-white/30 bg-white/80 p-4 shadow-lg backdrop-blur-sm dark:bg-black/70">
+          {state.success && state.data && state.data.length > 0 ? (
+            <div className="mb-4 rounded-xl border border-zinc-200 bg-white/90 p-3 text-left text-sm text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-200">
+              <p className="mb-2 font-semibold">Nearby restaurants</p>
+              <ul className="space-y-2">
+                {state.data.map((place) => (
+                  <li key={place.id} className="border-b border-zinc-200 pb-2 last:border-b-0 last:pb-0 dark:border-zinc-700">
+                    <p className="font-medium">{place.name}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {place.cuisine ? `${place.cuisine} • ` : ''}
+                      {place.street ?? 'Unknown address'}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {state.error ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-left text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+              {state.error}
+            </div>
+          ) : null}
+
+          <form onSubmit={submitSearchDirect} className="flex flex-col gap-3 sm:flex-row">
+            <input
+              id="site-search-latitude"
+              name="latitude"
+              type="text"
+              defaultValue="40.9807"
+              placeholder="Latitude"
+              className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+            <input
+              id="site-search-longitude"
+              name="longitude"
+              type="text"
+              defaultValue="-73.6918"
+              placeholder="Longitude"
+              className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            >
+              {isPending ? 'Searching…' : 'Search'}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
