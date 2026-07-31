@@ -10,7 +10,7 @@ Payment Gateways: Securely process credit cards and online payments directly fro
 ### Social & Media APIs:
 Embed content, manage pins, or allow users to log in using external accounts (e.g., YouTube API, Pinterest API).
 
-## Finding APIs
+## Finding and Using APIs
 
 ### Typically standard google searches can help you locate any existing API
 ie:  Is there an API that can give me a list of restaurants
