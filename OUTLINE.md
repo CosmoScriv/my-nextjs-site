@@ -1,7 +1,7 @@
 # Using API's
 A request that can be sent from the browser to a server.  These requests typically return json data that can be used on your web page
 
-## Common Subcategories:
+## Common API Categories:
 
 ### Third-Party Data APIs: 
 Fetch live information like weather conditions, financial market rates, or maps (e.g., Google Maps API).
@@ -10,13 +10,15 @@ Payment Gateways: Securely process credit cards and online payments directly fro
 ### Social & Media APIs:
 Embed content, manage pins, or allow users to log in using external accounts (e.g., YouTube API, Pinterest API).
 
+## Finding APIs
+
 ### Typically standard google searches can help you locate any existing API
 ie:  Is there an API that can give me a list of restaurants
 
 ### There are also some universal lists that can be used to help find API's
 https://apilist.fun/
 
-##  Assignment
+## Assignment
 Let's Write a web page that leverages OpenStreetMap API, to help Tim and Kylie find a restaurant
 
 ### About the API we are demonstrating: 
@@ -39,7 +41,7 @@ curl -s "https://nominatim.openstreetmap.org/search?q=New%20York,%20NY&format=js
 ```
 
 ### Step 3:
-Install curl if needed and test about curl commands
+Install curl if needed and test using the curl commands
 
 ### Step 4:
 Create a HTML page using the background you created.  Include UI to accept a City and State
