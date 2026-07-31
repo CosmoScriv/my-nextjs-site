@@ -15,6 +15,33 @@ type SearchState = {
 
 const initialState: SearchState = { success: false };
 
+async function geocodeCityState(city: string, state: string) {
+  const query = `${city}, ${state}`;
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&limit=1`;
+
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'my-nextjs-site/1.0',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Geocoding failed (${response.status})`);
+  }
+
+  const data = await response.json();
+  const first = data?.[0];
+
+  if (!first?.lat || !first?.lon) {
+    throw new Error('Could not find that city and state.');
+  }
+
+  return {
+    latitude: Number(first.lat),
+    longitude: Number(first.lon),
+  };
+}
+
 async function searchFoodOSMDirect({
   latitude,
   longitude,
@@ -59,7 +86,7 @@ async function searchFoodOSMDirect({
 
     return {
       success: true,
-      data: places.slice(0, 20),
+      data: places.slice(0, 4),
     };
   } catch (error) {
     return {
@@ -77,26 +104,40 @@ export default function Home() {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
-    const latitude = Number((formData.get('latitude') as string | null)?.trim() ?? '');
-    const longitude = Number((formData.get('longitude') as string | null)?.trim() ?? '');
+    const city = (formData.get('city') as string | null)?.trim() ?? '';
+    const state = (formData.get('state') as string | null)?.trim() ?? '';
 
-    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-      setState({ success: false, error: 'Enter both latitude and longitude.' });
+    if (!city || !state) {
+      setState({ success: false, error: 'Enter both city and state.' });
       return;
     }
 
     setIsPending(true);
-    const result = await searchFoodOSMDirect({ latitude, longitude, foodType: 'restaurant' });
-    setState(result);
-    setIsPending(false);
+
+    try {
+      const coordinates = await geocodeCityState(city, state);
+      const result = await searchFoodOSMDirect({
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        foodType: 'restaurant',
+      });
+      setState(result);
+    } catch (error) {
+      setState({
+        success: false,
+        error: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-50 font-sans dark:bg-black">
       <div className="absolute inset-0 bg-[url('/eats.png')] bg-contain bg-center bg-no-repeat" />
       <div className="absolute inset-0" />
-      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center justify-end pt-80 text-center sm:px-8 sm:pb-12">
-        <div className="m-2 w-[80%] max-w-[28rem] rounded-2xl border border-white/30 bg-white/80 p-4 shadow-lg backdrop-blur-sm dark:bg-black/70">
+      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center justify-end pt-105 text-center sm:px-8 sm:pb-12">
+        <div className="m-2 w-[80%] max-w-[28rem] rounded-2xl border border-white/30 bg-white/70 p-4 shadow-lg backdrop-blur-sm dark:bg-black/60">
           {state.success && state.data && state.data.length > 0 ? (
             <div className="mb-4 rounded-xl border border-zinc-200 bg-white/90 p-3 text-left text-sm text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-200">
               <p className="mb-2 font-semibold">Nearby restaurants</p>
@@ -120,27 +161,29 @@ export default function Home() {
             </div>
           ) : null}
 
-          <form onSubmit={submitSearchDirect} className="flex flex-col gap-3 sm:flex-row">
-            <input
-              id="site-search-latitude"
-              name="latitude"
-              type="text"
-              defaultValue="40.9807"
-              placeholder="Latitude"
-              className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-            <input
-              id="site-search-longitude"
-              name="longitude"
-              type="text"
-              defaultValue="-73.6918"
-              placeholder="Longitude"
-              className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
+          <form onSubmit={submitSearchDirect} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                id="site-search-city"
+                name="city"
+                type="text"
+                defaultValue="New York"
+                placeholder="City"
+                className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+              <input
+                id="site-search-state"
+                name="state"
+                type="text"
+                defaultValue="NY"
+                placeholder="State"
+                className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 outline-none ring-0 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="mx-auto w-full rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 sm:w-auto"
             >
               {isPending ? 'Searching…' : 'Search'}
             </button>

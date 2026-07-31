@@ -5,7 +5,7 @@ https://openstreetmap.org
 curl -X POST -d "data=[out:json];node(1);out;" "https://overpass-api.de/api/interpreter"
 curl -s -X POST --data-urlencode 'data=[out:json];(nwr["amenity"="restaurant"](around:3000,40.9807,-73.6918););out center;' "https://overpass-api.de/api/interpreter" | python3 -m json.tool
 
-- add another curl her to accept city state and convert to lat, lon
+curl -s "https://nominatim.openstreetmap.org/search?q=New%20York,%20NY&format=jsonv2&limit=1" -H "User-Agent: my-nextjs-site/1.0" | python3 -m json.tool
 
 2. use curl to demonstrate
 3. show how app calls and displays
