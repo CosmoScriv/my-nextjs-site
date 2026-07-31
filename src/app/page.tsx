@@ -15,7 +15,7 @@ type SearchState = {
 
 const initialState: SearchState = { success: false };
 
-async function geocodeCityState(city: string, state: string) {
+async function geocodeCityState(city, state) {
   const query = `${city}, ${state}`;
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=jsonv2&limit=1`;
 
@@ -30,9 +30,9 @@ async function geocodeCityState(city: string, state: string) {
   }
 
   const data = await response.json();
-  const first = data?.[0];
+  const first = data[0];
 
-  if (!first?.lat || !first?.lon) {
+  if (!first || !first.lat || !first.lon) {
     throw new Error('Could not find that city and state.');
   }
 
@@ -42,17 +42,11 @@ async function geocodeCityState(city: string, state: string) {
   };
 }
 
-async function searchFoodOSMDirect({
-  latitude,
-  longitude,
-  radius = 3000,
-  foodType = 'restaurant',
-}: {
-  latitude: number;
-  longitude: number;
-  radius?: number;
-  foodType?: string;
-}): Promise<SearchState> {
+async function searchFood(params) {
+  const latitude = params.latitude;
+  const longitude = params.longitude;
+  const radius = params.radius || 3000;
+  const foodType = params.foodType || 'restaurant';
   const query = `[out:json][timeout:25];(nwr["amenity"="${foodType}"](around:${radius},${latitude},${longitude}););out center;`;
 
   try {
@@ -89,6 +83,7 @@ async function searchFoodOSMDirect({
       data: places.slice(0, 4),
     };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'An error occurred',
@@ -100,7 +95,7 @@ export default function Home() {
   const [state, setState] = useState<SearchState>(initialState);
   const [isPending, setIsPending] = useState(false);
 
-  async function submitSearchDirect(event: FormEvent<HTMLFormElement>) {
+  async function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
@@ -116,7 +111,7 @@ export default function Home() {
 
     try {
       const coordinates = await geocodeCityState(city, state);
-      const result = await searchFoodOSMDirect({
+      const result = await searchFood({
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
         foodType: 'restaurant',
@@ -156,12 +151,10 @@ export default function Home() {
           ) : null}
 
           {state.error ? (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-left text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-              {state.error}
-            </div>
+            <div></div>
           ) : null}
 
-          <form onSubmit={submitSearchDirect} className="flex flex-col gap-3">
+          <form onSubmit={submitSearch} className="flex flex-col gap-3">
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 id="site-search-city"

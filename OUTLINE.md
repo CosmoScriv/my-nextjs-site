@@ -1,5 +1,14 @@
 # Using API's
 A request that can be sent from the browser to a server.  These requests typically return json data that can be used on your web page
+Background on you, introduce yourself
+History and how your career planned
+AI effect, curiosity is secret to success
+passionate
+simplefy implementation
+powerpoint with screen shots
+   add a slide of web pages that are using APIs
+   share google sheet
+by Wednesday
 
 ## Common API Categories:
 
@@ -30,18 +39,20 @@ Use Nano Banana to create a background image
 ### Step 2:
 Use curl to test the API calls we will be using
 
-### Find Restaurants near the latitude and longitude of 40.9807,-73.6918
-```bash
-curl -s -X POST --data-urlencode 'data=[out:json];(nwr["amenity"="restaurant"](around:3000,40.9807,-73.6918););out center;' "https://overpass-api.de/api/interpreter" | python3 -m json.tool
-```
-
 ### Convert New York, NY to a latitude and longitude
 ```bash
 curl -s "https://nominatim.openstreetmap.org/search?q=New%20York,%20NY&format=jsonv2&limit=1" -H "User-Agent: my-nextjs-site/1.0" | python3 -m json.tool
 ```
 
+### Find Restaurants near the latitude and longitude of 40.9807,-73.6918
+```bash
+curl -s -X POST --data-urlencode 'data=[out:json];(nwr["amenity"="restaurant"](around:3000,40.9807,-73.6918););out center;' "https://overpass-api.de/api/interpreter" | python3 -m json.tool
+```
+
+
+
 ### Step 3:
-Install curl if needed and test using the curl commands
+Install or use curl if possible; otherwise, I will also demonstrate
 
 ### Step 4:
 Create a HTML page using the background you created.  Add UI to accept a City and State
@@ -54,3 +65,4 @@ Display Restaurants
 
 ## Reference
 https://github.com/CosmoScriv/my-nextjs-site/blame/main/src/app/page.tsx
+https://github.com/CosmoScriv/my-nextjs-site/blob/main/OUTLINE.md#finding-apis
