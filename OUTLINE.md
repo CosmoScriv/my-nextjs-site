@@ -18,11 +18,11 @@ ie:  Is there an API that can give me a list of restaurants
 ### There are also some universal lists that can be used to help find API's
 https://apilist.fun/
 
-## Assignment
-Let's Write a web page that leverages OpenStreetMap API, to help Tim and Kylie find a restaurant
-
 ### About the API we are demonstrating: 
 https://www.openstreetmap.org/about
+
+## Assignment
+Let's Write a web page that leverages OpenStreetMap API, to help Tim and Kylie find a restaurant
 
 ### Step 1: 
 Use Nano Banana to create a background image
@@ -44,7 +44,7 @@ curl -s "https://nominatim.openstreetmap.org/search?q=New%20York,%20NY&format=js
 Install curl if needed and test using the curl commands
 
 ### Step 4:
-Create a HTML page using the background you created.  Include UI to accept a City and State
+Create a HTML page using the background you created.  Add UI to accept a City and State
 
 ### Step 5:
 When the user selects Search call for data using TypeScript or JavaScript
